@@ -10,6 +10,7 @@ import static com.github.iauglov.model.Action.ANSWERS_EDIT;
 import static com.github.iauglov.model.Action.ANSWERS_EDIT_CONFIRMATION;
 import static com.github.iauglov.model.Action.ANSWERS_LINK_WITH_QUESTION;
 import static com.github.iauglov.model.Action.ANSWERS_LINK_WITH_QUESTION_FIRST_STEP;
+import static com.github.iauglov.model.Action.GET_ANSWERS;
 import static com.github.iauglov.model.Action.GUIDES;
 import static com.github.iauglov.model.Action.GUIDES_CREATE;
 import static com.github.iauglov.model.Action.GUIDES_DELETE;
@@ -19,13 +20,21 @@ import static com.github.iauglov.model.Action.GUIDES_EDIT_CONFIRMATION;
 import static com.github.iauglov.model.Action.GUIDES_EDIT_DELAY;
 import static com.github.iauglov.model.Action.GUIDES_EDIT_TEXT;
 import static com.github.iauglov.model.Action.GUIDES_EDIT_TITLE;
+import static com.github.iauglov.model.Action.GUIDES_LIST;
 import static com.github.iauglov.model.Action.QUESTIONS;
 import static com.github.iauglov.model.Action.QUESTIONS_CREATE;
 import static com.github.iauglov.model.Action.QUESTIONS_DELETE;
+import static com.github.iauglov.model.Action.QUESTIONS_DELETE_CONFIRMATION;
 import static com.github.iauglov.model.Action.QUESTIONS_EDIT;
+import static com.github.iauglov.model.Action.QUESTIONS_EDIT_CONFIRMATION;
 import static com.github.iauglov.model.Action.QUESTIONS_LINK_WITH_ANSWER;
+import static com.github.iauglov.model.Action.QUESTIONS_LINK_WITH_ANSWER_FIRST_STEP;
 import static com.github.iauglov.model.Action.QUESTIONS_LINK_WITH_GUIDE;
+import static com.github.iauglov.model.Action.QUESTIONS_LINK_WITH_GUIDE_FIRST_STEP;
 import com.github.iauglov.model.NotFoundException;
+import com.github.iauglov.persistence.Answer;
+import com.github.iauglov.persistence.Guide;
+import com.github.iauglov.persistence.Question;
 import im.dlg.botsdk.Bot;
 import im.dlg.botsdk.domain.InteractiveEvent;
 import im.dlg.botsdk.domain.interactive.InteractiveAction;
@@ -53,6 +62,10 @@ public class InteractiveProcessor {
         String id = event.getId().toUpperCase();
         if (Action.canProcess(id)) {
             switch (Action.valueOf(id)) {
+                case GET_ANSWERS: {
+                    sentAnswersToPeer(event);
+                    break;
+                }
                 case ADMIN: {
                     processAdmin(event);
                     break;
@@ -63,6 +76,10 @@ public class InteractiveProcessor {
                 }
                 case GUIDES_CREATE: {
                     guideCrudProcessor.startCreatingGuide(event);
+                    break;
+                }
+                case GUIDES_LIST: {
+                    processGuideList(event);
                     break;
                 }
                 case GUIDES_EDIT: {
@@ -138,27 +155,43 @@ public class InteractiveProcessor {
                     break;
                 }
                 case QUESTIONS_LINK_WITH_ANSWER: {
+                    processQuestionLinkingWithAnswer(event);
                     break;
                 }
-                case QUESTIONS_LINK_WITH_ANSWER_CONFIRMATION: {
+                case QUESTIONS_LINK_WITH_ANSWER_FIRST_STEP: {
+                    questionAnswerCrudProcessor.startQuestionLinkingWithAnswer(event);
+                    break;
+                }
+                case QUESTIONS_LINK_WITH_ANSWER_SECOND_STEP: {
+                    questionAnswerCrudProcessor.endQuestionLinkingWithAnswer(event);
                     break;
                 }
                 case QUESTIONS_LINK_WITH_GUIDE: {
+                    processQuestionLinkingWithGuide(event);
                     break;
                 }
-                case QUESTIONS_LINK_WITH_GUIDE_CONFIRMATION: {
+                case QUESTIONS_LINK_WITH_GUIDE_FIRST_STEP: {
+                    questionAnswerCrudProcessor.startQuestionLinkingWithGuide(event);
+                    break;
+                }
+                case QUESTIONS_LINK_WITH_GUIDE_SECOND_STEP: {
+                    questionAnswerCrudProcessor.endQuestionLinkingWithGuide(event);
                     break;
                 }
                 case QUESTIONS_EDIT: {
+                    processQuestionEditing(event);
                     break;
                 }
                 case QUESTIONS_EDIT_CONFIRMATION: {
+                    questionAnswerCrudProcessor.startQuestionEditing(event);
                     break;
                 }
                 case QUESTIONS_DELETE: {
+                    processQuestionDeleting(event);
                     break;
                 }
                 case QUESTIONS_DELETE_CONFIRMATION: {
+                    processQuestionDeletingConfirmation(event);
                     break;
                 }
                 default: {
@@ -171,17 +204,159 @@ public class InteractiveProcessor {
         System.out.println(event);
     }
 
+    private void sentAnswersToPeer(InteractiveEvent event) {
+        Integer questionId = Integer.valueOf(event.getValue());
+
+        try {
+            Answer answer = questionAnswerService.getAnswerForQuestion(questionId);
+            bot.messaging().sendText(event.getPeer(), answer.getText());
+
+            List<Question> questions = questionAnswerService.getAllQuestionsForAnswer(answer.getId());
+            List<InteractiveAction> actions = new ArrayList<>();
+
+            questions.forEach(question -> {
+                actions.add(new InteractiveAction(GET_ANSWERS.asId(), new InteractiveButton(question.getId().toString(), question.getText())));
+            });
+
+            InteractiveGroup group = new InteractiveGroup("Популярные вопросы", "Выберите интересующий вас вопрос.", actions);
+
+            bot.interactiveApi().send(event.getPeer(), group);
+        } catch (NotFoundException e) {
+            bot.messaging().sendText(event.getPeer(), "К сожалению, на данный момент вопрос нет ответа. Обратитесь к службе поддержки");
+            e.printStackTrace();
+        }
+    }
+
+    private void processGuideList(InteractiveEvent event) {
+        List<Guide> guides = guideService.getAllGuides();
+
+        if (guides.size() == 0) {
+            bot.messaging().sendText(event.getPeer(), "Гайды еще не созадвались");
+        }
+
+        StringBuilder stringBuilder = new StringBuilder();
+
+        guides.forEach(guide -> {
+            stringBuilder
+                    .append("ID: ").append(guide.getId())
+                    .append(", Задержка: ").append(guide.getDelay())
+                    .append(" секунд, Заголовок: ").append(guide.getTitle())
+                    .append(", Текст: ").append(guide.getText())
+                    .append("\n\n");
+        });
+
+        stringBuilder.deleteCharAt(stringBuilder.length() - 1).deleteCharAt(stringBuilder.length() - 1);
+
+        bot.messaging().sendText(event.getPeer(), stringBuilder.toString());
+        guideCrudProcessor.openInteractiveAdmin(event.getPeer());
+    }
+
+    private void processQuestionLinkingWithGuide(InteractiveEvent event) {
+        List<InteractiveSelectOption> selectOptions = new ArrayList<>();
+
+        questionAnswerService.getAllQuestions().forEach(guide -> {
+            selectOptions.add(new InteractiveSelectOption(guide.getId().toString(), guide.getText()));
+        });
+
+        InteractiveSelect interactiveSelect = new InteractiveSelect("Выбрать...", "Выбрать...", selectOptions);
+
+        ArrayList<InteractiveAction> actions = new ArrayList<>();
+
+        actions.add(new InteractiveAction(QUESTIONS.asId(), new InteractiveButton(QUESTIONS.asId(), QUESTIONS.getLabel())));
+        actions.add(new InteractiveAction(QUESTIONS_LINK_WITH_ANSWER_FIRST_STEP.asId(), interactiveSelect));
+
+        InteractiveGroup group = new InteractiveGroup("Привязка вопроса к гайду", "Тут вы можете связать вопрос с ответом.", actions);
+
+        bot.interactiveApi().update(event.getMid(), group);
+    }
+
+    private void processQuestionLinkingWithAnswer(InteractiveEvent event) {
+        List<InteractiveSelectOption> selectOptions = new ArrayList<>();
+
+        questionAnswerService.getAllQuestions().forEach(guide -> {
+            selectOptions.add(new InteractiveSelectOption(guide.getId().toString(), guide.getText()));
+        });
+
+        InteractiveSelect interactiveSelect = new InteractiveSelect("Выбрать...", "Выбрать...", selectOptions);
+
+        ArrayList<InteractiveAction> actions = new ArrayList<>();
+
+        actions.add(new InteractiveAction(QUESTIONS.asId(), new InteractiveButton(QUESTIONS.asId(), QUESTIONS.getLabel())));
+        actions.add(new InteractiveAction(QUESTIONS_LINK_WITH_GUIDE_FIRST_STEP.asId(), interactiveSelect));
+
+        InteractiveGroup group = new InteractiveGroup("Привязка вопроса к гайду", "Тут вы можете связать вопрос с гайдом.", actions);
+
+        bot.interactiveApi().update(event.getMid(), group);
+    }
+
+    private void processQuestionDeletingConfirmation(InteractiveEvent event) {
+        String questionId = event.getValue();
+
+        try {
+            questionAnswerService.deleteQuestion(Integer.parseInt(questionId));
+            bot.messaging().delete(event.getMid());
+            bot.messaging().sendText(event.getPeer(), "Вопрос успешно удалён.").thenAccept(uuid -> {
+                guideCrudProcessor.openInteractiveAdmin(event.getPeer());
+            });
+        } catch (NotFoundException e) {
+            bot.messaging().sendText(event.getPeer(), "Вы пытаетесь удалить уже удаленный вопрос.").thenAccept(uuid -> {
+                guideCrudProcessor.openInteractiveAdmin(event.getPeer());
+            });
+        }
+    }
+
+    private void processQuestionDeleting(InteractiveEvent event) {
+        List<InteractiveSelectOption> selectOptions = new ArrayList<>();
+
+        questionAnswerService.getAllQuestions().forEach(guide -> {
+            selectOptions.add(new InteractiveSelectOption(guide.getId().toString(), guide.getText()));
+        });
+
+        InteractiveSelect interactiveSelect = new InteractiveSelect("Выбрать...", "Выбрать...", selectOptions);
+
+        ArrayList<InteractiveAction> actions = new ArrayList<>();
+
+        actions.add(new InteractiveAction(QUESTIONS.asId(), new InteractiveButton(QUESTIONS.asId(), QUESTIONS.getLabel())));
+        actions.add(new InteractiveAction(QUESTIONS_DELETE_CONFIRMATION.asId(), interactiveSelect));
+
+        InteractiveGroup group = new InteractiveGroup("Удаление вопросов", null, actions);
+
+        bot.interactiveApi().update(event.getMid(), group);
+    }
+
+    private void processQuestionEditing(InteractiveEvent event) {
+        List<InteractiveSelectOption> selectOptions = new ArrayList<>();
+
+        questionAnswerService.getAllQuestions().forEach(guide -> {
+            selectOptions.add(new InteractiveSelectOption(guide.getId().toString(), guide.getText()));
+        });
+
+        InteractiveSelect interactiveSelect = new InteractiveSelect("Выбрать...", "Выбрать...", selectOptions);
+
+        ArrayList<InteractiveAction> actions = new ArrayList<>();
+
+        actions.add(new InteractiveAction(QUESTIONS.asId(), new InteractiveButton(QUESTIONS.asId(), QUESTIONS.getLabel())));
+        actions.add(new InteractiveAction(QUESTIONS_EDIT_CONFIRMATION.asId(), interactiveSelect));
+
+        InteractiveGroup group = new InteractiveGroup("Редактирование вопросов", "Выберите вопрос, в котором хотите отредактировать текст", actions);
+
+        bot.interactiveApi().update(event.getMid(), group);
+    }
+
     private void processAnswerDeletingConfirmation(InteractiveEvent event) {
         String answerId = event.getValue();
 
         try {
             questionAnswerService.deleteAnswer(Integer.parseInt(answerId));
             bot.messaging().delete(event.getMid());
-            bot.messaging().sendText(event.getPeer(), "Ответ успешно удалён");
+            bot.messaging().sendText(event.getPeer(), "Ответ успешно удалён.").thenAccept(uuid -> {
+                guideCrudProcessor.openInteractiveAdmin(event.getPeer());
+            });
         } catch (NotFoundException e) {
-            bot.messaging().sendText(event.getPeer(), "Вы пытаетесь удалить уже удаленный ответ.");
+            bot.messaging().sendText(event.getPeer(), "Вы пытаетесь удалить уже удаленный ответ.").thenAccept(uuid -> {
+                guideCrudProcessor.openInteractiveAdmin(event.getPeer());
+            });
         }
-        guideCrudProcessor.openInteractiveAdmin(event.getPeer());
     }
 
     private void processAnswerDeleting(InteractiveEvent event) {
@@ -198,7 +373,7 @@ public class InteractiveProcessor {
         actions.add(new InteractiveAction(ANSWERS.asId(), new InteractiveButton(ANSWERS.asId(), ANSWERS.getLabel())));
         actions.add(new InteractiveAction(ANSWERS_DELETE_CONFIRMATION.asId(), interactiveSelect));
 
-        InteractiveGroup group = new InteractiveGroup("Удаление ответов", null, actions);
+        InteractiveGroup group = new InteractiveGroup("Удаление ответов", "При удалении ответа все вопросы к этому ответу будут удалены!", actions);
 
         bot.interactiveApi().update(event.getMid(), group);
     }
@@ -289,7 +464,7 @@ public class InteractiveProcessor {
         actions.add(new InteractiveAction(GUIDES.asId(), new InteractiveButton(GUIDES.asId(), GUIDES.getLabel())));
         actions.add(new InteractiveAction(GUIDES_DELETE_CONFIRMATION.asId(), interactiveSelect));
 
-        InteractiveGroup group = new InteractiveGroup("Удаление", null, actions);
+        InteractiveGroup group = new InteractiveGroup("Удаление гайдов", "При удалении гайда все вопросы к этому гайду будут удалены!", actions);
 
         bot.interactiveApi().update(event.getMid(), group);
     }
@@ -300,11 +475,14 @@ public class InteractiveProcessor {
         try {
             guideService.deleteGuide(Integer.valueOf(guideId));
             bot.messaging().delete(event.getMid());
-            bot.messaging().sendText(event.getPeer(), "Гайд успешно удалён");
+            bot.messaging().sendText(event.getPeer(), "Гайд успешно удалён").thenAccept(uuid -> {
+                guideCrudProcessor.openInteractiveAdmin(event.getPeer());
+            });
         } catch (NotFoundException e) {
-            bot.messaging().sendText(event.getPeer(), "Вы пытаетесь удалить уже удаленный гайд.");
+            bot.messaging().sendText(event.getPeer(), "Вы пытаетесь удалить уже удаленный гайд.").thenAccept(uuid -> {
+                guideCrudProcessor.openInteractiveAdmin(event.getPeer());
+            });
         }
-        guideCrudProcessor.openInteractiveAdmin(event.getPeer());
     }
 
     private void processAdmin(InteractiveEvent event) {
@@ -324,6 +502,7 @@ public class InteractiveProcessor {
 
         actions.add(new InteractiveAction(ADMIN.asId(), new InteractiveButton(ADMIN.asId(), ADMIN.getLabel())));
         actions.add(new InteractiveAction(GUIDES_CREATE.asId(), new InteractiveButton(GUIDES_CREATE.asId(), GUIDES_CREATE.getLabel())));
+        actions.add(new InteractiveAction(GUIDES_LIST.asId(), new InteractiveButton(GUIDES_LIST.asId(), GUIDES_LIST.getLabel())));
         actions.add(new InteractiveAction(GUIDES_EDIT.asId(), new InteractiveButton(GUIDES_EDIT.asId(), GUIDES_EDIT.getLabel())));
         actions.add(new InteractiveAction(GUIDES_DELETE.asId(), DANGER, new InteractiveButton(GUIDES_DELETE.asId(), GUIDES_DELETE.getLabel()), null));
 

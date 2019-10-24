@@ -2,6 +2,7 @@ package com.github.iauglov.persistence;
 
 import static java.time.Clock.systemUTC;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.PrePersist;
@@ -26,4 +27,17 @@ public class InternalUser {
         registeredAt = LocalDateTime.now(systemUTC());
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        InternalUser that = (InternalUser) o;
+        return Objects.equals(id, that.id) &&
+                Objects.equals(registeredAt, that.registeredAt);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, registeredAt);
+    }
 }

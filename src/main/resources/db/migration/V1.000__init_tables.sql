@@ -18,7 +18,7 @@ CREATE TABLE user_guides(
 
 CREATE TABLE answers(
     id serial primary key,
-    text varchar(255) NOT NULL,
+    text varchar(1024) NOT NULL,
     question_id int
 );
 
@@ -27,8 +27,8 @@ CREATE TABLE questions(
     text varchar(255) NOT NULL,
     guide_id int,
     answer_id int,
-    FOREIGN KEY (guide_id) REFERENCES guides (id),
-    FOREIGN KEY (answer_id) REFERENCES answers (id)
+    FOREIGN KEY (guide_id) REFERENCES guides (id) ON DELETE CASCADE,
+    FOREIGN KEY (answer_id) REFERENCES answers (id) ON DELETE CASCADE
 );
 
 ALTER TABLE answers ADD FOREIGN KEY (question_id) REFERENCES questions(id);

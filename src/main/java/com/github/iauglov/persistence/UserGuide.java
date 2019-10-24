@@ -1,6 +1,7 @@
 package com.github.iauglov.persistence;
 
 import java.io.Serializable;
+import java.util.Objects;
 import javax.persistence.Embeddable;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
@@ -29,5 +30,32 @@ public class UserGuide {
         private InternalUser user;
         @OneToOne
         private Guide guide;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            PK pk = (PK) o;
+            return Objects.equals(user, pk.user) &&
+                    Objects.equals(guide, pk.guide);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(user, guide);
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        UserGuide userGuide = (UserGuide) o;
+        return Objects.equals(pk, userGuide.pk);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(pk);
     }
 }

@@ -20,7 +20,8 @@ public class CrudCache {
 
     public final Set<Integer> questionCreating = new HashSet<>();
     public final Map<Integer, Integer> questionEditingMap = new HashMap<>();
-    public final Map<Integer, Integer> questionCachedToLink = new HashMap<>();
+    public final Map<Integer, Integer> questionCachedToLinkWithGuide = new HashMap<>();
+    public final Map<Integer, Integer> questionCachedToLinkWithAnswer = new HashMap<>();
 
     public final Set<Integer> answerCreating = new HashSet<>();
     public final Map<Integer, Integer> answerEditingMap = new HashMap<>();

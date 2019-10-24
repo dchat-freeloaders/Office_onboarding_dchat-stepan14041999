@@ -117,7 +117,7 @@ public class MessageProcessor {
         stringBuilder.append("/admin - Вывод панели администратора.").append("\n");
 //        stringBuilder.append("/guide create <time> <text> - Создать гайд с текстом <text>, который отобразится новичку через <time> времени. Время указывается в формате Dt, где D - время, а t - тип времени (Например 10h).").append("\n");
 //        stringBuilder.append("/guide count - Отобразить количество созданных гайдов.").append("\n");
-        stringBuilder.append("/guide list - Отобразить гайды в формате ID - Задержка - Текст.").append("\n");
+//        stringBuilder.append("/guide list - Отобразить гайды в формате ID - Задержка - Текст.").append("\n");
 //        stringBuilder.append("/guide delete <id> - Удалить гайд по ID.").append("\n");
 
         bot.messaging().sendText(message.getSender(), stringBuilder.toString());

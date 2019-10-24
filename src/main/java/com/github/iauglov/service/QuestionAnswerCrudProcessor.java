@@ -1,11 +1,15 @@
 package com.github.iauglov.service;
 
 import static com.github.iauglov.model.Action.ANSWERS;
-import static com.github.iauglov.model.Action.ANSWERS_LINK_WITH_QUESTION_FIRST_STEP;
+import static com.github.iauglov.model.Action.ANSWERS_LINK_WITH_QUESTION_SECOND_STEP;
 import static com.github.iauglov.model.Action.GUIDES;
 import static com.github.iauglov.model.Action.QUESTIONS;
+import static com.github.iauglov.model.Action.QUESTIONS_LINK_WITH_ANSWER_SECOND_STEP;
+import static com.github.iauglov.model.Action.QUESTIONS_LINK_WITH_GUIDE_SECOND_STEP;
 import com.github.iauglov.persistence.Answer;
 import com.github.iauglov.persistence.AnswerRepository;
+import com.github.iauglov.persistence.Guide;
+import com.github.iauglov.persistence.GuideRepository;
 import com.github.iauglov.persistence.Question;
 import com.github.iauglov.persistence.QuestionRepository;
 import im.dlg.botsdk.Bot;
@@ -32,6 +36,8 @@ public class QuestionAnswerCrudProcessor {
     private final QuestionRepository questionRepository;
     private final Bot bot;
     private final QuestionAnswerService questionAnswerService;
+    private final GuideService guideService;
+    private final GuideRepository guideRepository;
 
     public boolean processMessage(Message message) {
         int peerId = message.getPeer().getId();
@@ -57,10 +63,6 @@ public class QuestionAnswerCrudProcessor {
         }
 
         return false;
-    }
-
-    private void processQuestionEditing(Message message) {
-
     }
 
     public void startCreatingQuestion(InteractiveEvent event) {
@@ -111,7 +113,8 @@ public class QuestionAnswerCrudProcessor {
 
     private void removeFor(int peerId) {
         crudCache.questionCreating.remove(peerId);
-        crudCache.questionCachedToLink.remove(peerId);
+        crudCache.questionCachedToLinkWithAnswer.remove(peerId);
+        crudCache.questionCachedToLinkWithGuide.remove(peerId);
 
         crudCache.answerCreating.remove(peerId);
         crudCache.answerCachedToLink.remove(peerId);
@@ -124,8 +127,8 @@ public class QuestionAnswerCrudProcessor {
 
         List<InteractiveSelectOption> selectOptions = new ArrayList<>();
 
-        questionAnswerService.getAllQuestions().forEach(guide -> {
-            selectOptions.add(new InteractiveSelectOption(guide.getId().toString(), guide.getText()));
+        questionAnswerService.getAllQuestions().forEach(question -> {
+            selectOptions.add(new InteractiveSelectOption(question.getId().toString(), question.getText()));
         });
 
         InteractiveSelect interactiveSelect = new InteractiveSelect("Выбрать...", "Выбрать...", selectOptions);
@@ -133,7 +136,7 @@ public class QuestionAnswerCrudProcessor {
         ArrayList<InteractiveAction> actions = new ArrayList<>();
 
         actions.add(new InteractiveAction(ANSWERS.asId(), new InteractiveButton(ANSWERS.asId(), ANSWERS.getLabel())));
-        actions.add(new InteractiveAction(ANSWERS_LINK_WITH_QUESTION_FIRST_STEP.asId(), interactiveSelect));
+        actions.add(new InteractiveAction(ANSWERS_LINK_WITH_QUESTION_SECOND_STEP.asId(), interactiveSelect));
 
         InteractiveGroup group = new InteractiveGroup("Привязка ответа к вопросу", "Выберите вопрос.", actions);
 
@@ -211,6 +214,144 @@ public class QuestionAnswerCrudProcessor {
 
         bot.messaging().sendText(message.getPeer(), "Ответ успешно отредактирован.").thenAccept(uuid -> {
             openInteractiveAdmin(message.getPeer());
+        });
+    }
+
+    public void startQuestionEditing(InteractiveEvent event) {
+        int peerId = event.getPeer().getId();
+        Integer questionId = Integer.valueOf(event.getValue());
+
+        removeFor(peerId);
+
+        crudCache.questionEditingMap.put(peerId, questionId);
+
+        bot.messaging().sendText(event.getPeer(), "Введите новый текст для вопроса.");
+    }
+
+    private void processQuestionEditing(Message message) {
+        Integer questionId = crudCache.questionEditingMap.remove(message.getPeer().getId());
+
+        Optional<Question> optionalQuestion = questionRepository.findById(questionId);
+
+        if (!optionalQuestion.isPresent()) {
+            bot.messaging().sendText(message.getPeer(), "Вопрос не найден. Попробуйте снова").thenAccept(uuid -> {
+                openInteractiveAdmin(message.getPeer());
+            });
+        }
+
+        Question question = optionalQuestion.get();
+        question.setText(message.getText());
+
+        questionRepository.save(question);
+
+        bot.messaging().sendText(message.getPeer(), "Вопрос успешно отредактирован.").thenAccept(uuid -> {
+            openInteractiveAdmin(message.getPeer());
+        });
+    }
+
+    public void startQuestionLinkingWithAnswer(InteractiveEvent event) {
+        Integer questionId = Integer.valueOf(event.getValue());
+
+        crudCache.questionCachedToLinkWithAnswer.put(event.getPeer().getId(), questionId);
+
+        List<InteractiveSelectOption> selectOptions = new ArrayList<>();
+
+        questionAnswerService.getAllAnswers().forEach(answer -> {
+            selectOptions.add(new InteractiveSelectOption(answer.getId().toString(), answer.getText()));
+        });
+
+        InteractiveSelect interactiveSelect = new InteractiveSelect("Выбрать...", "Выбрать...", selectOptions);
+
+        ArrayList<InteractiveAction> actions = new ArrayList<>();
+
+        actions.add(new InteractiveAction(QUESTIONS.asId(), new InteractiveButton(QUESTIONS.asId(), QUESTIONS.getLabel())));
+        actions.add(new InteractiveAction(QUESTIONS_LINK_WITH_ANSWER_SECOND_STEP.asId(), interactiveSelect));
+
+        InteractiveGroup group = new InteractiveGroup("Привязка вопроса к ответу", "Выберите ответ.", actions);
+
+        bot.interactiveApi().update(event.getMid(), group);
+    }
+
+    public void endQuestionLinkingWithAnswer(InteractiveEvent event) {
+        Integer questionId = crudCache.questionCachedToLinkWithAnswer.remove(event.getPeer().getId());
+        Integer answerId = Integer.valueOf(event.getValue());
+
+        Optional<Question> optionalQuestion = questionRepository.findById(questionId);
+
+        if (!optionalQuestion.isPresent()) {
+            bot.messaging().sendText(event.getPeer(), "Вопрос не найден. Попробуйте снова").thenAccept(uuid -> {
+                openInteractiveAdmin(event.getPeer());
+            });
+        }
+
+        Optional<Answer> optionalAnswer = answerRepository.findById(answerId);
+
+        if (!optionalAnswer.isPresent()) {
+            bot.messaging().sendText(event.getPeer(), "Ответ не найден. Попробуйте снова").thenAccept(uuid -> {
+                openInteractiveAdmin(event.getPeer());
+            });
+        }
+
+        Answer answer = optionalAnswer.get();
+        Question question = optionalQuestion.get();
+        question.setAnswer(answer);
+        questionRepository.save(question);
+
+        bot.messaging().sendText(event.getPeer(), "Вопрос успешно привязан к ответу.").thenAccept(uuid -> {
+            openInteractiveAdmin(event.getPeer());
+        });
+    }
+
+    public void startQuestionLinkingWithGuide(InteractiveEvent event) {
+        Integer questionId = Integer.valueOf(event.getValue());
+
+        crudCache.questionCachedToLinkWithAnswer.put(event.getPeer().getId(), questionId);
+
+        List<InteractiveSelectOption> selectOptions = new ArrayList<>();
+
+        guideService.getAllGuides().forEach(guide -> {
+            selectOptions.add(new InteractiveSelectOption(guide.getId().toString(), guide.getText()));
+        });
+
+        InteractiveSelect interactiveSelect = new InteractiveSelect("Выбрать...", "Выбрать...", selectOptions);
+
+        ArrayList<InteractiveAction> actions = new ArrayList<>();
+
+        actions.add(new InteractiveAction(QUESTIONS.asId(), new InteractiveButton(QUESTIONS.asId(), QUESTIONS.getLabel())));
+        actions.add(new InteractiveAction(QUESTIONS_LINK_WITH_GUIDE_SECOND_STEP.asId(), interactiveSelect));
+
+        InteractiveGroup group = new InteractiveGroup("Привязка вопроса к гайду", "Выберите гайд.", actions);
+
+        bot.interactiveApi().update(event.getMid(), group);
+    }
+
+    public void endQuestionLinkingWithGuide(InteractiveEvent event) {
+        Integer questionId = crudCache.questionCachedToLinkWithGuide.remove(event.getPeer().getId());
+        Integer guideId = Integer.valueOf(event.getValue());
+
+        Optional<Question> optionalQuestion = questionRepository.findById(questionId);
+
+        if (!optionalQuestion.isPresent()) {
+            bot.messaging().sendText(event.getPeer(), "Вопрос не найден. Попробуйте снова").thenAccept(uuid -> {
+                openInteractiveAdmin(event.getPeer());
+            });
+        }
+
+        Optional<Guide> optionalGuide = guideRepository.findById(guideId);
+
+        if (!optionalGuide.isPresent()) {
+            bot.messaging().sendText(event.getPeer(), "Гайд не найден. Попробуйте снова").thenAccept(uuid -> {
+                openInteractiveAdmin(event.getPeer());
+            });
+        }
+
+        Guide guide = optionalGuide.get();
+        Question question = optionalQuestion.get();
+        question.setGuide(guide);
+        questionRepository.save(question);
+
+        bot.messaging().sendText(event.getPeer(), "Вопрос успешно привязан к гайду.").thenAccept(uuid -> {
+            openInteractiveAdmin(event.getPeer());
         });
     }
 }

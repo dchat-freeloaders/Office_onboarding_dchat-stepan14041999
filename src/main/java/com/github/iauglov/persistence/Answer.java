@@ -1,5 +1,6 @@
 package com.github.iauglov.persistence;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import static javax.persistence.GenerationType.IDENTITY;
@@ -23,6 +24,7 @@ public class Answer {
     @GeneratedValue(strategy = IDENTITY)
     @Setter(NONE)
     private Integer id;
+    @Column(length = 1024)
     private String text;
     @OneToOne
     private Question question;

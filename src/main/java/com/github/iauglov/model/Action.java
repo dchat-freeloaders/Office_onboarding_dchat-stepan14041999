@@ -7,9 +7,11 @@ import lombok.Getter;
 @Getter
 public enum Action {
 
+    // ADMIN
     ADMIN("Админ-панель"),
     GUIDES("Гайды"),
     GUIDES_CREATE("Создать гайд"),
+    GUIDES_LIST("Вывести список гайдов"),
     GUIDES_EDIT("Редактировать гайд"),
     GUIDES_EDIT_CONFIRMATION(""),
     GUIDES_EDIT_TITLE("Редактировать заголовок"),
@@ -22,9 +24,11 @@ public enum Action {
     QUESTIONS_EDIT("Редактировать вопрос"),
     QUESTIONS_EDIT_CONFIRMATION(""),
     QUESTIONS_LINK_WITH_GUIDE("Связать вопрос с гайдом"),
-    QUESTIONS_LINK_WITH_GUIDE_CONFIRMATION(""),
+    QUESTIONS_LINK_WITH_GUIDE_FIRST_STEP(""),
+    QUESTIONS_LINK_WITH_GUIDE_SECOND_STEP(""),
     QUESTIONS_LINK_WITH_ANSWER("Связать вопрос с ответом"),
-    QUESTIONS_LINK_WITH_ANSWER_CONFIRMATION(""),
+    QUESTIONS_LINK_WITH_ANSWER_FIRST_STEP(""),
+    QUESTIONS_LINK_WITH_ANSWER_SECOND_STEP(""),
     QUESTIONS_DELETE("Удалить вопрос"),
     QUESTIONS_DELETE_CONFIRMATION(""),
     ANSWERS("Ответы"),
@@ -35,7 +39,10 @@ public enum Action {
     ANSWERS_LINK_WITH_QUESTION_FIRST_STEP(""),
     ANSWERS_LINK_WITH_QUESTION_SECOND_STEP(""),
     ANSWERS_DELETE("Удалить ответ"),
-    ANSWERS_DELETE_CONFIRMATION("");
+    ANSWERS_DELETE_CONFIRMATION(""),
+
+    //USER
+    GET_ANSWERS("");
 
     private final String label;
 

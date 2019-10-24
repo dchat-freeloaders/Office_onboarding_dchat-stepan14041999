@@ -1,5 +1,6 @@
 package com.github.iauglov.persistence;
 
+import java.util.Objects;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -28,4 +29,19 @@ public class Guide {
     @Column(length = 2048)
     private String text;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Guide guide = (Guide) o;
+        return Objects.equals(id, guide.id) &&
+                Objects.equals(delay, guide.delay) &&
+                Objects.equals(title, guide.title) &&
+                Objects.equals(text, guide.text);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, delay, title, text);
+    }
 }
