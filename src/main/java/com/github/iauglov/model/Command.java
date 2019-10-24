@@ -3,6 +3,7 @@ package com.github.iauglov.model;
 public enum Command {
 
     START,
+    ADMIN,
     HELP,
     GUIDE,
     QUESTION,

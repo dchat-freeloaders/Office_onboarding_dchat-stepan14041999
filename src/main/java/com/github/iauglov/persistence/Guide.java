@@ -24,6 +24,7 @@ public class Guide {
     @Setter(NONE)
     private Integer id;
     private Long delay;
+    private String title;
     @Column(length = 2048)
     private String text;
 

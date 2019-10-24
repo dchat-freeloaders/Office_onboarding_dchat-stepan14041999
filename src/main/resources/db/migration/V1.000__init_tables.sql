@@ -6,6 +6,7 @@ CREATE TABLE users(
 CREATE TABLE guides(
     id serial primary key,
     delay int8,
+    title varchar(255) not null,
     text varchar(2048) not null
 );
 

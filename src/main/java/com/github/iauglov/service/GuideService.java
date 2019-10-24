@@ -16,11 +16,12 @@ public class GuideService {
     private final GuideRepository guideRepository;
     private final UserGuideRepository userGuideRepository;
 
-    public void registerNewGuide(String delay, String text) {
+    public void registerNewGuide(String delay, String title, String text) {
         long initDelayInSeconds = Duration.parse("PT" + delay.toUpperCase()).getSeconds();
 
         Guide guide = new Guide();
         guide.setDelay(initDelayInSeconds);
+        guide.setTitle(title);
         guide.setText(text);
         guideRepository.save(guide);
     }
