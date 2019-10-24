@@ -59,6 +59,7 @@ public class MessageProcessor {
                     switch (Command.valueOf(command)) {
                         case START: {
                             processStart(message);
+                            break;
                         }
                         case HELP: {
                             processHelp(message);
