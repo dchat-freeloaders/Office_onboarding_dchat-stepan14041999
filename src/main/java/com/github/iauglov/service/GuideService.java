@@ -68,6 +68,11 @@ public class GuideService {
                                 userGuideRepository.save(userGuide);
 
                                 List<Question> questions = questionAnswerService.getAllQuestionsForGuide(guide.getId());
+
+                                if (questions.size() == 0) {
+                                    return;
+                                }
+
                                 List<InteractiveAction> actions = new ArrayList<>();
 
                                 questions.forEach(question -> {

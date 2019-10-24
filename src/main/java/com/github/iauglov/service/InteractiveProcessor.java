@@ -212,6 +212,11 @@ public class InteractiveProcessor {
             bot.messaging().sendText(event.getPeer(), answer.getText());
 
             List<Question> questions = questionAnswerService.getAllQuestionsForAnswer(answer.getId());
+
+            if (questions.size() == 0) {
+                return;
+            }
+
             List<InteractiveAction> actions = new ArrayList<>();
 
             questions.forEach(question -> {
