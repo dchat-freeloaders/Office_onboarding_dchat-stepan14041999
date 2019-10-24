@@ -61,7 +61,7 @@ public class GuideService {
                 pk.setUser(internalUser);
                 userGuide.setPk(pk);
 
-                if (userRegisteredAt.plus(guide.getDelay(), SECONDS).isBefore(now(systemUTC())) && sentGuides.contains(userGuide)) {
+                if (userRegisteredAt.plus(guide.getDelay(), SECONDS).isBefore(now(systemUTC())) && !sentGuides.contains(userGuide)) {
                     bot.users().findUserPeer(internalUser.getId()).thenAccept(optionalPeer -> {
                         optionalPeer.ifPresent(peer -> {
                             bot.messaging().sendText(peer, String.format(GUIDE_PATTERN, guide.getTitle(), guide.getText())).thenAccept(uuid -> {

@@ -247,8 +247,9 @@ public class InteractiveProcessor {
 
         stringBuilder.deleteCharAt(stringBuilder.length() - 1).deleteCharAt(stringBuilder.length() - 1);
 
-        bot.messaging().sendText(event.getPeer(), stringBuilder.toString());
-        guideCrudProcessor.openInteractiveAdmin(event.getPeer());
+        bot.messaging().sendText(event.getPeer(), stringBuilder.toString()).thenAccept(uuid -> {
+            guideCrudProcessor.openInteractiveAdmin(event.getPeer());
+        });
     }
 
     private void processQuestionLinkingWithGuide(InteractiveEvent event) {
