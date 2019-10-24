@@ -46,9 +46,9 @@ public class MessageProcessor {
 
         String messageText = message.getText();
 
-        if (messageText.startsWith("/irina")) {
-            if (messageText.length() > 7) {
-                String truncatedMessage = messageText.substring(7);
+        if (messageText.startsWith("/")) {
+            if (messageText.length() > 1) {
+                String truncatedMessage = messageText.substring(1);
 
                 String[] commandAndArgs = truncatedMessage.split(" ");
                 String command = commandAndArgs[0].toUpperCase();
@@ -91,6 +91,8 @@ public class MessageProcessor {
             } else {
                 unknownCommand(message);
             }
+        } else {
+            unknownCommand(message);
         }
     }
 
@@ -110,12 +112,12 @@ public class MessageProcessor {
         StringBuilder stringBuilder = new StringBuilder();
 
         stringBuilder.append("Помощь по органайзеру гайдов.").append("\n\n");
-        stringBuilder.append("/irina help - Вывод списка команд органайзера.").append("\n");
-        stringBuilder.append("/irina admin - Вывод панели администратора.").append("\n");
-        stringBuilder.append("/irina guide create <time> <text> - Создать гайд с текстом <text>, который отобразится новичку через <time> времени. Время указывается в формате Dt, где D - время, а t - тип времени (Например 10h).").append("\n");
-        stringBuilder.append("/irina guide count - Отобразить количество созданных гайдов.").append("\n");
-        stringBuilder.append("/irina guide list - Отобразить гайды в формате ID - Задержка - Текст.").append("\n");
-        stringBuilder.append("/irina guide delete <id> - Удалить гайд по ID.").append("\n");
+        stringBuilder.append("/help - Вывод списка команд органайзера.").append("\n");
+        stringBuilder.append("/admin - Вывод панели администратора.").append("\n");
+        stringBuilder.append("/guide create <time> <text> - Создать гайд с текстом <text>, который отобразится новичку через <time> времени. Время указывается в формате Dt, где D - время, а t - тип времени (Например 10h).").append("\n");
+        stringBuilder.append("/guide count - Отобразить количество созданных гайдов.").append("\n");
+        stringBuilder.append("/guide list - Отобразить гайды в формате ID - Задержка - Текст.").append("\n");
+        stringBuilder.append("/guide delete <id> - Удалить гайд по ID.").append("\n");
 
         bot.messaging().sendText(message.getSender(), stringBuilder.toString());
     }
@@ -139,10 +141,6 @@ public class MessageProcessor {
                     } else {
                         unknownCommand(message);
                     }
-                    break;
-                }
-                case "count": {
-                    bot.messaging().sendText(message.getSender(), String.format("Количество гайдов: %d.", guideService.getCountOfGuides()));
                     break;
                 }
                 case "list": {

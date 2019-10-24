@@ -32,10 +32,6 @@ public class GuideService {
 //        });
     }
 
-    public long getCountOfGuides() {
-        return guideRepository.count();
-    }
-
     public List<Guide> getAllGuides() {
         return guideRepository.findAll();
     }

@@ -10,6 +10,7 @@ import static com.github.iauglov.model.Action.ANSWERS_LINK_WITH_QUESTION;
 import static com.github.iauglov.model.Action.GUIDES;
 import static com.github.iauglov.model.Action.GUIDES_CREATE;
 import static com.github.iauglov.model.Action.GUIDES_DELETE;
+import static com.github.iauglov.model.Action.GUIDES_DELETE_CONFIRMATION;
 import static com.github.iauglov.model.Action.GUIDES_EDIT;
 import static com.github.iauglov.model.Action.QUESTIONS;
 import static com.github.iauglov.model.Action.QUESTIONS_CREATE;
@@ -23,6 +24,8 @@ import im.dlg.botsdk.domain.interactive.InteractiveAction;
 import static im.dlg.botsdk.domain.interactive.InteractiveAction.Style.DANGER;
 import im.dlg.botsdk.domain.interactive.InteractiveButton;
 import im.dlg.botsdk.domain.interactive.InteractiveGroup;
+import im.dlg.botsdk.domain.interactive.InteractiveSelect;
+import im.dlg.botsdk.domain.interactive.InteractiveSelectOption;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -52,6 +55,14 @@ public class InteractiveProcessor {
                     processGuideCreating(event);
                     break;
                 }
+                case GUIDES_EDIT: {
+                    processGuideEditing(event);
+                    break;
+                }
+                case GUIDES_DELETE: {
+                    processGuideDeleting(event);
+                    break;
+                }
                 case ANSWERS: {
                     processAnswers(event);
                     break;
@@ -70,8 +81,31 @@ public class InteractiveProcessor {
         System.out.println(event);
     }
 
+    private void processGuideEditing(InteractiveEvent event) {
+
+    }
+
+    private void processGuideDeleting(InteractiveEvent event) {
+        List<InteractiveSelectOption> selectOptions = new ArrayList<>();
+
+        guideService.getAllGuides().forEach(guide -> {
+            selectOptions.add(new InteractiveSelectOption(guide.getId().toString(), guide.getTitle()));
+        });
+
+        InteractiveSelect interactiveSelect = new InteractiveSelect("Какой гайд вы хотите удалить?", "Выбрать...", selectOptions);
+
+        ArrayList<InteractiveAction> actions = new ArrayList<>();
+
+        actions.add(new InteractiveAction(GUIDES.asId(), new InteractiveButton(GUIDES.asId(), GUIDES.getLabel())));
+        actions.add(new InteractiveAction(GUIDES_DELETE_CONFIRMATION.asId(), interactiveSelect));
+
+        InteractiveGroup group = new InteractiveGroup("Quiz", "Do you want to answer a quiz?", actions);
+
+        bot.interactiveApi().update(event.getMid(), group);
+    }
+
     private void processGuideCreating(InteractiveEvent event) {
-        crudProcessor.startCreatingGuide(event.getPeer().getId());
+        crudProcessor.startCreatingGuide(event);
     }
 
     private void processAdmin(InteractiveEvent event) {
@@ -87,17 +121,6 @@ public class InteractiveProcessor {
     }
 
     private void processGuides(InteractiveEvent event) {
-//        List<InteractiveSelectOption> selectOptions = new ArrayList<>();
-//        selectOptions.add(new InteractiveSelectOption("Tom & Cross", "Tom & Cross"));
-//        selectOptions.add(new InteractiveSelectOption("Pinky gram", "Pinky gram"));
-//        selectOptions.add(new InteractiveSelectOption("Rody Mo", "Rody Mo"));
-//
-//        ArrayList<InteractiveAction> actions = new ArrayList<>();
-//        InteractiveSelect interactiveSelect = new InteractiveSelect("Who want's to play?", "Choose one...", selectOptions);
-//        actions.add(new InteractiveAction("action_1", interactiveSelect));
-//        InteractiveSelect interactiveSelect2 = new InteractiveSelect("Who want's to play?", "Choose one...", selectOptions);
-//        actions.add(new InteractiveAction("action_1", interactiveSelect2));
-//        InteractiveGroup interactiveGroup = new InteractiveGroup("Quiz", "Do you want to answer a quiz?", actions);
         List<InteractiveAction> actions = new ArrayList<>();
 
         actions.add(new InteractiveAction(ADMIN.asId(), new InteractiveButton(ADMIN.asId(), ADMIN.getLabel())));

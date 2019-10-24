@@ -12,17 +12,20 @@ public enum Action {
     GUIDES_CREATE("Создать гайд"),
     GUIDES_EDIT("Редактировать гайд"),
     GUIDES_DELETE("Удалить гайд"),
+    GUIDES_DELETE_CONFIRMATION(""),
     QUESTIONS("Вопросы"),
     QUESTIONS_CREATE("Создать вопрос"),
     QUESTIONS_EDIT("Редактировать вопрос"),
     QUESTIONS_LINK_WITH_GUIDE("Связать вопрос с гайдом"),
     QUESTIONS_LINK_WITH_ANSWER("Связать вопрос с ответом"),
     QUESTIONS_DELETE("Удалить вопрос"),
+    QUESTIONS_DELETE_CONFIRMATION(""),
     ANSWERS("Ответы"),
     ANSWERS_CREATE("Добавить ответ"),
     ANSWERS_EDIT("Редактировать ответ"),
     ANSWERS_LINK_WITH_QUESTION("Связать ответ с вопросом"),
-    ANSWERS_DELETE("Удалить ответ");
+    ANSWERS_DELETE("Удалить ответ"),
+    ANSWERS_DELETE_CONFIRMATION("");
 
     private final String label;
 
