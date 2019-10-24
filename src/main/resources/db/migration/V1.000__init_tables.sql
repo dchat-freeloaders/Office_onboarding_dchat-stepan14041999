@@ -19,7 +19,7 @@ CREATE TABLE user_guides(
 CREATE TABLE answers(
     id serial primary key,
     text varchar(255) NOT NULL,
-    question_id int NOT NULL
+    question_id int
 );
 
 CREATE TABLE questions(

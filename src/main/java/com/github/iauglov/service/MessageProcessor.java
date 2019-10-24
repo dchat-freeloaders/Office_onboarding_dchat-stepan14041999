@@ -27,7 +27,8 @@ public class MessageProcessor {
 
     private final UserRepository userRepository;
     private final GuideService guideService;
-    private final CrudProcessor crudProcessor;
+    private final GuideCrudProcessor guideCrudProcessor;
+    private final QuestionAnswerCrudProcessor questionAnswerCrudProcessor;
     private final Bot bot;
 
     public void process(Message message) {
@@ -40,7 +41,7 @@ public class MessageProcessor {
             return;
         }
 
-        if (crudProcessor.processMessage(message)) {
+        if (guideCrudProcessor.processMessage(message) || questionAnswerCrudProcessor.processMessage(message)) {
             return;
         }
 
@@ -114,10 +115,10 @@ public class MessageProcessor {
         stringBuilder.append("Помощь по органайзеру гайдов.").append("\n\n");
         stringBuilder.append("/help - Вывод списка команд органайзера.").append("\n");
         stringBuilder.append("/admin - Вывод панели администратора.").append("\n");
-        stringBuilder.append("/guide create <time> <text> - Создать гайд с текстом <text>, который отобразится новичку через <time> времени. Время указывается в формате Dt, где D - время, а t - тип времени (Например 10h).").append("\n");
-        stringBuilder.append("/guide count - Отобразить количество созданных гайдов.").append("\n");
+//        stringBuilder.append("/guide create <time> <text> - Создать гайд с текстом <text>, который отобразится новичку через <time> времени. Время указывается в формате Dt, где D - время, а t - тип времени (Например 10h).").append("\n");
+//        stringBuilder.append("/guide count - Отобразить количество созданных гайдов.").append("\n");
         stringBuilder.append("/guide list - Отобразить гайды в формате ID - Задержка - Текст.").append("\n");
-        stringBuilder.append("/guide delete <id> - Удалить гайд по ID.").append("\n");
+//        stringBuilder.append("/guide delete <id> - Удалить гайд по ID.").append("\n");
 
         bot.messaging().sendText(message.getSender(), stringBuilder.toString());
     }

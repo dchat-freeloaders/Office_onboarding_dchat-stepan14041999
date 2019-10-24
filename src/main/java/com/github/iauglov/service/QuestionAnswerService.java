@@ -20,12 +20,6 @@ public class QuestionAnswerService {
     private final GuideRepository guideRepository;
     private final AnswerRepository answerRepository;
 
-    public void registerNewQuestion(String text) {
-        Question question = new Question();
-        question.setText(text);
-        questionRepository.save(question);
-    }
-
     public void linkQuestionWithGuide(Integer guideId, Integer questionId) throws NotFoundException {
         Optional<Guide> optionalGuide = guideRepository.findById(guideId);
 
@@ -46,6 +40,14 @@ public class QuestionAnswerService {
         }
     }
 
+    public List<Question> getAllQuestions() {
+        return questionRepository.findAll();
+    }
+
+    public List<Answer> getAllAnswers() {
+        return answerRepository.findAll();
+    }
+
     public List<Question> getAllQuestionsForGuide(Integer guideId) {
         return questionRepository.findAllByGuideId(guideId);
     }
@@ -58,4 +60,11 @@ public class QuestionAnswerService {
         return answerRepository.findByQuestionId(questionId).orElseThrow(() -> new NotFoundException(String.format("Can't find answer with question id '%d'", questionId)));
     }
 
+    public void deleteAnswer(int parseInt) throws NotFoundException {
+        if (answerRepository.existsById(parseInt)) {
+            answerRepository.deleteById(parseInt);
+        } else {
+            throw new NotFoundException(String.format("Answer with id '%d' not found", parseInt));
+        }
+    }
 }
