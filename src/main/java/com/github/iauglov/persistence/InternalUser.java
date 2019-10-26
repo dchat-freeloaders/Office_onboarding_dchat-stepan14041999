@@ -20,6 +20,7 @@ public class InternalUser {
 
     @Id
     private Integer id;
+    private String name;
     private LocalDateTime registeredAt;
 
     @PrePersist

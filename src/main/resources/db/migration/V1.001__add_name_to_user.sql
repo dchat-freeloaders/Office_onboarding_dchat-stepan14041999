@@ -1,0 +1,1 @@
+ALTER TABLE users add column name varchar(255) default 'Unknown';
