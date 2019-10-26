@@ -240,7 +240,6 @@ public class GuideCrudProcessor {
         crudCache.guideTitleEditing.remove(peerId);
         crudCache.guideTextEditing.remove(peerId);
         crudCache.guideDelayEditing.remove(peerId);
-        crudCache.guideMap.remove(peerId);
     }
 
     public void saveCurrentEditingGuide(int peerId, int guideId) {
