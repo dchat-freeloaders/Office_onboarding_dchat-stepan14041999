@@ -205,7 +205,6 @@ public class MessageProcessor {
             String subCommand = args[0];
 
             switch (subCommand) {
-
             }
         }
     }
