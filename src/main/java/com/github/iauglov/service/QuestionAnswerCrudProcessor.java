@@ -305,12 +305,12 @@ public class QuestionAnswerCrudProcessor {
     public void startQuestionLinkingWithGuide(InteractiveEvent event) {
         Integer questionId = Integer.valueOf(event.getValue());
 
-        crudCache.questionCachedToLinkWithAnswer.put(event.getPeer().getId(), questionId);
+        crudCache.questionCachedToLinkWithGuide.put(event.getPeer().getId(), questionId);
 
         List<InteractiveSelectOption> selectOptions = new ArrayList<>();
 
         guideService.getAllGuides().forEach(guide -> {
-            selectOptions.add(new InteractiveSelectOption(guide.getId().toString(), guide.getText()));
+            selectOptions.add(new InteractiveSelectOption(guide.getId().toString(), guide.getTitle()));
         });
 
         InteractiveSelect interactiveSelect = new InteractiveSelect("Выбрать...", "Выбрать...", selectOptions);

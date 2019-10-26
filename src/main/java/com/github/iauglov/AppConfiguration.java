@@ -44,7 +44,7 @@ public class AppConfiguration {
         return Bot.start(botConfig).get();
     }
 
-    @Scheduled(fixedDelay = 30_000)
+    @Scheduled(fixedDelay = 10_000)
     public void processGuideSending() {
         guideService.processScheduledGuides();
     }

@@ -269,9 +269,9 @@ public class InteractiveProcessor {
         ArrayList<InteractiveAction> actions = new ArrayList<>();
 
         actions.add(new InteractiveAction(QUESTIONS.asId(), new InteractiveButton(QUESTIONS.asId(), QUESTIONS.getLabel())));
-        actions.add(new InteractiveAction(QUESTIONS_LINK_WITH_ANSWER_FIRST_STEP.asId(), interactiveSelect));
+        actions.add(new InteractiveAction(QUESTIONS_LINK_WITH_GUIDE_FIRST_STEP.asId(), interactiveSelect));
 
-        InteractiveGroup group = new InteractiveGroup("Привязка вопроса к гайду", "Тут вы можете связать вопрос с ответом.", actions);
+        InteractiveGroup group = new InteractiveGroup("Привязка вопроса к гайду", "Тут вы можете связать вопрос с гайдом.", actions);
 
         bot.interactiveApi().update(event.getMid(), group);
     }
@@ -288,9 +288,9 @@ public class InteractiveProcessor {
         ArrayList<InteractiveAction> actions = new ArrayList<>();
 
         actions.add(new InteractiveAction(QUESTIONS.asId(), new InteractiveButton(QUESTIONS.asId(), QUESTIONS.getLabel())));
-        actions.add(new InteractiveAction(QUESTIONS_LINK_WITH_GUIDE_FIRST_STEP.asId(), interactiveSelect));
+        actions.add(new InteractiveAction(QUESTIONS_LINK_WITH_ANSWER_FIRST_STEP.asId(), interactiveSelect));
 
-        InteractiveGroup group = new InteractiveGroup("Привязка вопроса к гайду", "Тут вы можете связать вопрос с гайдом.", actions);
+        InteractiveGroup group = new InteractiveGroup("Привязка вопроса к ответу", "Тут вы можете связать вопрос с ответом.", actions);
 
         bot.interactiveApi().update(event.getMid(), group);
     }
@@ -406,8 +406,8 @@ public class InteractiveProcessor {
     private void processAnswerLinking(InteractiveEvent event) {
         List<InteractiveSelectOption> selectOptions = new ArrayList<>();
 
-        questionAnswerService.getAllAnswers().forEach(guide -> {
-            selectOptions.add(new InteractiveSelectOption(guide.getId().toString(), guide.getText()));
+        questionAnswerService.getAllAnswers().forEach(answer -> {
+            selectOptions.add(new InteractiveSelectOption(answer.getId().toString(), answer.getText()));
         });
 
         InteractiveSelect interactiveSelect = new InteractiveSelect("Выбрать...", "Выбрать...", selectOptions);
