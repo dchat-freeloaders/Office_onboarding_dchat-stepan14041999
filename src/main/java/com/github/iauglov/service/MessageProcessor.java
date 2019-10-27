@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 public class MessageProcessor {
 
     private final UserRepository userRepository;
-    private final GuideService guideService;
+    private final GroupService groupService;
     private final GuideCrudProcessor guideCrudProcessor;
     private final QuestionAnswerCrudProcessor questionAnswerCrudProcessor;
     private final Bot bot;
@@ -33,6 +33,7 @@ public class MessageProcessor {
     public void process(Message message) {
         // Возможность работать с ботом только через приватный чат
         if (message.getPeer().getId() != message.getSender().getId()) {
+            groupService.registerGroupId(message.getPeer().getId(), message.getPeer().getAccessHash());
             return;
         }
 
