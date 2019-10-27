@@ -103,7 +103,6 @@ public class QuestionAnswerCrudProcessor {
         question.setText(message.getText());
 
         crudCache.questionCreating.remove(message.getPeer().getId());
-
         questionRepository.save(question);
 
         bot.messaging().sendText(message.getPeer(), "Вопрос успешно создан. Не забудьте его привязать к гайду или ответу.").thenAccept(uuid -> {
