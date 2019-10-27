@@ -65,11 +65,13 @@ public class GroupService {
         ((CompletableFuture<GroupsOuterClass.ResponseLoadMembers>) ReflectionUtils.invokeMethod(withTokenMethod, internalBotApi, GroupsGrpc.newFutureStub((Channel) getChannel),
                 new MyFunc(request))).thenAcceptAsync(response -> {
             response.getMembersList().forEach(member -> {
-                bot.users().findUserPeer(member.getUid()).thenAccept(optionalPeer -> optionalPeer.ifPresent(peer -> {
-                    bot.users().get(peer).thenAccept(optionalUser -> optionalUser.ifPresent(user -> {
-                        userRepository.save(new InternalUser(user.getPeer().getId(), user.getName(), now(systemUTC())));
+                if (!userRepository.existsById(member.getUid())) {
+                    bot.users().findUserPeer(member.getUid()).thenAccept(optionalPeer -> optionalPeer.ifPresent(peer -> {
+                        bot.users().get(peer).thenAccept(optionalUser -> optionalUser.ifPresent(user -> {
+                            userRepository.save(new InternalUser(user.getPeer().getId(), user.getName(), now(systemUTC())));
+                        }));
                     }));
-                }));
+                }
             });
         }, executor);
 
