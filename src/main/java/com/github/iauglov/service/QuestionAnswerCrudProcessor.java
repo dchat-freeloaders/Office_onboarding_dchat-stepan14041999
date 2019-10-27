@@ -177,7 +177,6 @@ public class QuestionAnswerCrudProcessor {
         Answer answer = optionalAnswer.get();
         Question question = optionalQuestion.get();
         answer.setQuestion(question);
-        
         answerRepository.save(answer);
 
         bot.messaging().sendText(event.getPeer(), "Ответ успешно привязан к вопросу.").thenAccept(uuid -> {
